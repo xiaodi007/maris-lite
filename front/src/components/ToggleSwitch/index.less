@@ -1,0 +1,25 @@
+.toggle-switch {
+    text-align: center;
+    .toggle-button {
+        padding: 14px 36px;
+        border: none;
+        background-color: transparent;
+        color: #333;
+        transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+
+        &.active {
+            background: linear-gradient(90deg, #D0E6F0 0%, #e6eaf1 100%);
+            transform: scale(1.05);
+        }
+
+        &:not(.active):hover {
+            background-color: #e0e0e0;
+        }
+
+        // 禁用按钮的焦点效果
+        &:focus {
+            outline: none; // 去掉默认焦点框
+            box-shadow: none; // 去掉默认阴影
+        }
+    }
+}

@@ -1,0 +1,5 @@
+.ant-input-group >.ant-input,
+.ant-input-search-button {
+    height: 46px!important;
+    font-size: 18px;
+}

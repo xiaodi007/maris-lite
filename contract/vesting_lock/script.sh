@@ -1,0 +1,4 @@
+sui client publish --gas-budget 1000000000
+
+
+0xfa46068c7b307fdb71010cb5fef8645af029286989d7032c9a7cb5bd675a69b4
