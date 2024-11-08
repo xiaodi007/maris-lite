@@ -9,8 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 const networks = {
-  custom: { url: "https://fullnode.testnet.sui.io/" },
-  // custom: { url: "https://rpc-testnet.suiscan.xyz/" },
+  // custom: { url: "https://fullnode.testnet.sui.io/" },
+  custom: { url: "https://rpc-testnet.suiscan.xyz/" },
 };
 
 ReactDOM.createRoot(document.getElementById("root")).render(
