@@ -62,7 +62,6 @@ export default function CreateToken() {
       console.log("Uploaded file blob ID:", blobId);
       if (blobId) {
         newIconUrl = `https://aggregator.walrus-testnet.walrus.space/v1/${blobId}`;
-        console.log("Uploaded file blob ID:", blobId);
       }
       message.destroy();
     }
@@ -89,21 +88,6 @@ export default function CreateToken() {
 
     const tx = new Transaction();
     tx.setGasBudget(1000000000);
-    // const coinDetails = await client.getCoins({
-    //   owner:  account.address,
-    //   coinType: '0xa1ec7fc00a6f40db9693ad1415d0c193ad3906494428cf252621037bd7117e29::usdc::USDC',
-    // });
-    // // console.log(coinDetails)
-    // const amountToTrans = 5 * 10 ** 6;
-    // const filteredData = coinDetails.data.filter(
-    //   (item) => parseInt(item.balance) > 1000000
-    // );
-    // console.log(filteredData);
-    // // console.log(showAddress)
-    // const coinIn = filteredData[0].coinObjectId;
-    // const coinInObj = tx.object(coinIn);
-    // // console.log(coinInObj);
-    // const usdcInput = tx.splitCoins(coinInObj, [amountToTrans]);
 
     await initMoveByteCodeTemplate("/pkg/move_bytecode_template_bg.wasm");
     const updated = await generateBytecode(coinMeta);
@@ -113,7 +97,6 @@ export default function CreateToken() {
       dependencies: [normalizeSuiObjectId("0x1"), normalizeSuiObjectId("0x2")],
     });
     tx.transferObjects([upgradeCap], account.address);
-    // tx.transferObjects([usdcInput], '0xde5448c74d811c5409041537078665ab8497a28fb125a95d7d8a12300cc655d5');
     // Dry run
     tx.setSender(account.address);
     const dryRunRes = await client.dryRunTransactionBlock({
@@ -138,10 +121,6 @@ export default function CreateToken() {
               showEffects: true,
             },
           });
-
-          // const packageId = finalRes.effects.created?.find(
-          //   (item) => item.owner === "Immutable"
-          // )?.reference.objectId;
           let supply = 0;
           if (coinMeta.mintAmout > 0) {
             supply = BigNumber(coinMeta.mintAmout).times(
@@ -183,6 +162,8 @@ export default function CreateToken() {
               }
             );
           }
+          message.destroy();
+          message.success("Tx Success! Create Coin!");
         },
         onError: (err) => {
           message.destroy();
@@ -201,7 +182,7 @@ export default function CreateToken() {
   const handleUpload = async (file) => {
     try {
       const response = await fetch(
-        `https://publisher.walrus-testnet.walrus.space/v1/store?epochs=1`,
+        `https://publisher.walrus-testnet.walrus.space/v1/store?epochs=100`,
         {
           method: "PUT",
           body: file,
@@ -290,9 +271,9 @@ export default function CreateToken() {
       const { number, string } = getMaxSupply(value);
       setMaxSupply(number); // 更新最大供应量
       setMaxSupplyLabel(string); // 更新最大供应量单位标签
-      form.setFieldsValue({
-        mintAmout: 0, // 重置 mintAmount 的值
-      });
+      // form.setFieldsValue({
+      //   mintAmout: 0, // 重置 mintAmount 的值
+      // });
     }
   };
 
@@ -370,6 +351,7 @@ export default function CreateToken() {
             label="Or Upload Image"
             valuePropName="fileList"
             getValueFromEvent={normFile}
+            extra="Currently using Walrus testnet"
           >
             <Upload
               beforeUpload={() => false}
@@ -379,7 +361,6 @@ export default function CreateToken() {
               <Button icon={<UploadOutlined />}>
                 Drop your file here or upload
               </Button>
-              <div className="text-gray-500"> Currently using Walrus testnet</div>
             </Upload>
           </Form.Item>
 
@@ -393,6 +374,7 @@ export default function CreateToken() {
                 message: "Please input the number of decimals!",
               },
             ]}
+            extra="Enter token decimal precision (default: 9 if unsure)"
           >
             <InputNumber
               min={0}
@@ -400,7 +382,6 @@ export default function CreateToken() {
               style={{ width: "100%" }}
               onChange={handleDecimalsChange}
             />
-             <div className="text-gray-500"> Enter token decimal precision (default: 9 if unsure)</div>
           </Form.Item>
 
           <Form.Item
@@ -409,6 +390,7 @@ export default function CreateToken() {
             rules={[
               { required: true, message: "Please input the total supply!" },
             ]}
+            extra="Enter initial token supply to mint (use 0 if unsure; supply can be minted later on the mint page)"
           >
             <InputNumber
               min={0}
@@ -416,7 +398,6 @@ export default function CreateToken() {
               placeholder="Your total coin supply"
               style={{ width: "100%" }}
             />
-            <div className="text-gray-500">Enter initial token supply to mint (use 0 if unsure; supply can be minted later on the mint page)</div>
           </Form.Item>
 
           <div className="flex justify-between items-center mb-5">

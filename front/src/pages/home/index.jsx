@@ -37,7 +37,7 @@ const items = [
     getItem("Token Mint", "/app/token-manager/token-mint"),
     getItem("Update Token Metadata", "/app/token-manager/update-metadata"),
     getItem("Revoke Authority", "/app/token-manager/revoke-auth"),
-    // getItem("Regulated Coin Deny List", "/app/token-manager/regcoin"),
+    getItem("Regulated Coin Deny List", "/app/token-manager/regcoin"),
   ]),
   getItem("Vesting & Lock Tokens", "/vest-lock", <LockOutlined />, [
     // getItem("Token Locks", "/app/toekn", null, [

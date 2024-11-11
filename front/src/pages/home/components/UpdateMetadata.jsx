@@ -174,7 +174,7 @@ export default function UpdateMetadata() {
     <div className="pb-10">
       <div className="pt-4 text-[40px] text-center">Update Token Metadata</div>
       <div className="text-[16px] text-center text-gray-500">
-        Easily Update the Metadata of your own Solana Token.
+        Easily Update the Metadata of your own Sui Token.
       </div>
       <div className="w-[700px] m-auto mt-5 p-8 bg-white">
         <ToggleSwitch options={coinTypeOptions} onChange={handleToggleChange} />
@@ -230,9 +230,9 @@ export default function UpdateMetadata() {
                 rules={[
                   { required: true, message: "Please input the coin symbol!" },
                   {
-                    min: 2,
+                    min: 5,
                     max: 8,
-                    message: "Symbol must be between 2 and 8 characters",
+                    message: "Symbol must be between 5 and 8 characters",
                   },
                   {
                     pattern: /^[a-zA-Z0-9]*$/,

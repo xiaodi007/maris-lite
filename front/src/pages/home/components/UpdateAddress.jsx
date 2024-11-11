@@ -20,7 +20,7 @@ import {
 const actionOptions = [
   { name: "Add", value: "add" },
   { name: "Remove", value: "remove" },
-  { name: "Check", value: "check" },
+  // { name: "Check", value: "check" },
 ];
 
 export default function UpdateAddress() {
@@ -195,7 +195,7 @@ export default function UpdateAddress() {
                 htmlType="submit"
                 disabled={!account}
               >
-                Revoke Freeze
+                Submit
               </Button>
             </div>
           </Form.Item>
