@@ -179,7 +179,7 @@ export default function VestCreate() {
     let isSUI = coin?.coinType === "0x2::sui::SUI";
     if (isSUI) {
       finalCoin = tx.splitCoins(tx.gas, [amount]);
-    }
+    } else {
     // 如果coinObjectCount==1 则直接分币
     if (currentBalance?.coinObjectCount === 1) {
       finalCoin = tx.splitCoins(tx.object(coin?.coinObjectId), [amount]);
@@ -195,6 +195,7 @@ export default function VestCreate() {
 
       // 再分币
       finalCoin = tx.splitCoins(primaryCoin, [amount]);
+    }
     }
 
     setLoading(true);

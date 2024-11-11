@@ -144,11 +144,12 @@ export default function VestManager() {
 
   const onSearch = () => {
     if (!searchValue) return;
+    setSureAddress(searchValue);
     if (currentVesting?.id) {
       setVestingInfoModalVisible(true);
       return;
     }
-    setSureAddress(searchValue);
+    // setSureAddress(searchValue);
     setLoading(true);
     message.loading("Loading...");
     setTimeout(() => {
@@ -287,6 +288,7 @@ export default function VestManager() {
             className=" text-[#2cb4cd] text-[14px] mr-4  cursor-pointer"
             onClick={() => {
               setSearchValue(record?.lock_id);
+              console.log(record)
               setCurrentClaim(record)
             }}
           >
