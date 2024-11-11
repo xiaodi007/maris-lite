@@ -37,7 +37,7 @@ const items = [
     getItem("Token Mint", "/app/token-manager/token-mint"),
     getItem("Update Token Metadata", "/app/token-manager/update-metadata"),
     getItem("Revoke Authority", "/app/token-manager/revoke-auth"),
-    getItem("Regulated Coin Deny List", "/app/token-manager/regcoin"),
+    // getItem("Regulated Coin Deny List", "/app/token-manager/regcoin"),
   ]),
   getItem("Vesting & Lock Tokens", "/vest-lock", <LockOutlined />, [
     // getItem("Token Locks", "/app/toekn", null, [
@@ -101,7 +101,7 @@ const App = () => {
       </Sider>
       <Layout>
         <div className="absolute right-5 top-3 flex items-center">
-          <Popover
+          {/* <Popover
             content={
               <div className="bg-black">
                 <WormholeConnect theme={{ background: "#2cb4cd" }} />
@@ -113,7 +113,7 @@ const App = () => {
             <div className="mr-3 px-3 py-[10px] rounded-md text-[#2cb4cd] cursor-pointer">
               WormholeConnect
             </div>
-          </Popover>
+          </Popover> */}
           <ConnectButton
             connectText="CONNECT WALLET"
             style={{ background: "#2cb4cd", color: "white", boxShadow: "none" }}
@@ -151,10 +151,10 @@ const App = () => {
           Ant Design ©{new Date().getFullYear()} Created by Ant UED
         </Footer>
       </Layout>
-      <WormholeModal
+      {/* <WormholeModal
         visible={openWormhole}
         onClose={() => setOpenWormhole(false)}
-      />
+      /> */}
     </Layout>
   );
 };
