@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Form,
-  Input,
-  Upload,
-  Button,
-  Row,
-  Col,
-  message,
-} from "antd";
+import { Form, Input, Upload, Button, Row, Col, message } from "antd";
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
   useAccounts,
@@ -19,7 +11,11 @@ import { Transaction } from "@mysten/sui/transactions";
 import BigNumber from "bignumber.js";
 import SelectTokenModal from "../../../components/SelectTokenModal";
 import ToggleSwitch from "../../../components/ToggleSwitch";
-import { groupByAddress, filterGroupsByType, findObjectByAddressAndType } from "../utils";
+import {
+  groupByAddress,
+  filterGroupsByType,
+  findObjectByAddressAndType,
+} from "../utils";
 
 const { Dragger } = Upload;
 const coinTypeOptions = [
@@ -62,12 +58,69 @@ export default function UpdateMetadata() {
   const handleToggleChange = (value) => {
     setSelectedValue(value);
   };
+  const handleUpload = async (file) => {
+    try {
+      const response = await fetch(
+        // `/api/v1/store?epochs=100`,
+        `https://publisher.walrus-testnet.walrus.space/v1/store?epochs=1`,
+        // `https://wal-publisher-testnet.staketab.org/v1/store?epochs=100/`,
+        {
+          method: "PUT",
+          // headers: {
+          //   "Content-Type": "application/octet-stream", // specify the content type for binary data
+          // },
+          body: file,
+        }
+      );
 
-  const onFinish = (values) => {
-    handleSave(values);
+      if (response.status === 200) {
+        const info = await response.json();
+        console.log("Upload successful:", info);
+        const blobId =
+          info.newlyCreated?.blobObject?.blobId ||
+          info?.alreadyCertified?.blobId;
+        message.success("Upload successful!");
+        return blobId;
+      } else {
+        throw new Error("Something went wrong when storing the blob!");
+      }
+    } catch (error) {
+      console.error("Error uploading the file:", error);
+      message.error("Failed to upload the file.");
+      return undefined;
+    }
+  };
+  const onFinish = async (values) => {
+    console.log(values.iconFiles);
+    const file = values.iconFiles?.[0]?.originFileObj;
+
+    let newIconUrl = values.iconUrl;; // 默认使用原来的 iconUrl
+
+    if (file) {
+      message.info("Uploading file...", 0);
+      const blobId = await handleUpload(file);
+      console.log("Uploaded file blob ID:", blobId);
+      if (blobId) {
+        newIconUrl = `https://aggregator.walrus-testnet.walrus.space/v1/${blobId}`;
+      }
+      message.destroy();
+    }
+
+    handleSave({ ...values, newIconUrl });
   };
 
   const handleSave = async (mintCoin) => {
+    if(
+      !mintCoin.newName &&
+      !mintCoin.newSymbol &&
+      !mintCoin.newIconUrl &&
+      !mintCoin.newDescription 
+    ) {
+      message.destroy();
+      message.error('All fields cannot be empty. Please fill in at least one field!');
+      return
+    }
+
     const tx = new Transaction();
 
     const selecUpdateCointreasury = findObjectByAddressAndType(
@@ -151,16 +204,6 @@ export default function UpdateMetadata() {
           setLoading(false);
           message.destroy();
           message.success("Tx Success!");
-
-          const finalRes = await client.waitForTransaction({
-            digest: txRes.digest,
-            options: {
-              showEffects: true,
-            },
-          });
-          const packageId = finalRes.effects.created?.find(
-            (item) => item.owner === "Immutable"
-          )?.reference.objectId;
         },
         onError: (err) => {
           setLoading(false);
@@ -211,9 +254,9 @@ export default function UpdateMetadata() {
                 rules={[
                   { required: false, message: "Please input the coin name!" },
                   {
-                    min: 2,
+                    min: 3,
                     max: 32,
-                    message: "Name must be between 2 and 32 characters",
+                    message: "Name must be between 3 and 32 characters",
                   },
                   {
                     pattern: /^[a-zA-Z0-9]*$/,
@@ -228,11 +271,11 @@ export default function UpdateMetadata() {
                 name="newSymbol"
                 label="Coin Symbol"
                 rules={[
-                  { required: true, message: "Please input the coin symbol!" },
+                  { required: false, message: "Please input the coin symbol!" },
                   {
                     min: 3,
                     max: 8,
-                    message: "Symbol must be between 5 and 8 characters",
+                    message: "Symbol must be between 3 and 8 characters",
                   },
                   {
                     pattern: /^[a-zA-Z0-9]*$/,
@@ -244,9 +287,12 @@ export default function UpdateMetadata() {
               </Form.Item>
             </Col>
             <Col span={12}>
+              <Form.Item name="iconUrl" label="Coin Image URL">
+                <Input placeholder="Eg. https://sui.com/images/logo.png" />
+              </Form.Item>
               <Form.Item
                 name="iconFiles"
-                label="images"
+                label="Or Upload Image"
                 valuePropName="fileList"
                 getValueFromEvent={normFile}
               >
@@ -293,7 +339,7 @@ export default function UpdateMetadata() {
       {/* 选择对话框 */}
       <SelectTokenModal
         visible={selectTokenModalVisible}
-        data={treasuryCapData}
+        data={coinMetadata}
         onClose={() => setSelectTokenModalVisible(false)}
         onSelect={(data) => {
           form.setFieldsValue({ coinAddress: data.address });
