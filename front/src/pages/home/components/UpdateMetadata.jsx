@@ -122,6 +122,7 @@ export default function UpdateMetadata() {
     }
 
     const tx = new Transaction();
+    tx.setGasBudget(10000000);
 
     const selecUpdateCointreasury = findObjectByAddressAndType(
       coinGroupData,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Input, Upload, Button, message } from "antd";
+import { Form, Input, Alert, Button, message, notification } from "antd";
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
   useAccounts,
@@ -20,12 +20,12 @@ import {
 const actionOptions = [
   { name: "Add", value: "add" },
   { name: "Remove", value: "remove" },
-  // { name: "Check", value: "check" },
+  { name: "Check", value: "check" },
 ];
 
 export default function UpdateAddress() {
-  const [selectedValue, setSelectedValue] = useState("");
-
+  const [selectedValue, setSelectedValue] = useState("add");
+  const [api, contextHolder] = notification.useNotification();
   const [selectTokenModalVisible, setSelectTokenModalVisible] = useState(false);
   const [form] = Form.useForm();
 
@@ -65,6 +65,7 @@ export default function UpdateAddress() {
 
   const handleSave = async (mintCoin) => {
     const tx = new Transaction();
+    tx.setGasBudget(100000000);
 
     const temp = mintCoin?.coinAddress;
     const _address = temp?.substring(0, temp.lastIndexOf("::"));
@@ -86,7 +87,6 @@ export default function UpdateAddress() {
       });
     }
     if (mintCoin.removeAddress) {
-      
       tx.moveCall({
         target: _address + "::" + "remove_addr_from_deny_list",
         // typeArguments: [mintCoin.coinAddress,],
@@ -94,6 +94,17 @@ export default function UpdateAddress() {
           tx.object("0x403"),
           tx.object(selectMintCointreasury.objectId),
           tx.pure.address(mintCoin.removeAddress),
+        ],
+      });
+    }
+    if (mintCoin.checkAddress) {
+      tx.moveCall({
+        target: _address + "::" + "contain_addr_from_deny_list",
+        typeArguments: [mintCoin.coinAddress],
+        arguments: [
+          tx.object("0x403"),
+          // tx.object(selectMintCointreasury.objectId),
+          tx.pure.address(mintCoin.checkAddress),
         ],
       });
     }
@@ -120,12 +131,62 @@ export default function UpdateAddress() {
             digest: txRes.digest,
             options: {
               showEffects: true,
+              showEvents: true,
             },
           });
-          const packageId = finalRes.effects.created?.find(
-            (item) => item.owner === "Immutable"
-          )?.reference.objectId;
+          console.log(finalRes);
+          const parsedJson = finalRes.events[0]?.parsedJson;
           message.success("Tx Success!");
+
+          api["info"]({
+            message: "Address Epoch Status",
+            description: (
+              <div>
+                {/* <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>Epoch Status</div> */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <span style={{ fontWeight: "500", marginRight: "8px" }}>
+                    Current Epoch:
+                  </span>
+                  <span
+                    style={{
+                      color: parsedJson.is_contain_current_epoch
+                        ? "#4caf50"
+                        : "#f44336",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {parsedJson.is_contain_current_epoch
+                      ? "Included"
+                      : "Not Included"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <span style={{ fontWeight: "500", marginRight: "8px" }}>
+                    Next Epoch:
+                  </span>
+                  <span
+                    style={{
+                      color: parsedJson.is_contain_next_epoch
+                        ? "#4caf50"
+                        : "#f44336",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {parsedJson.is_contain_next_epoch
+                      ? "Included"
+                      : "Not Included"}
+                  </span>
+                </div>
+              </div>
+            ),
+            duration: 0,
+          });
         },
         onError: (err) => {
           message.error(err.message);
@@ -138,6 +199,56 @@ export default function UpdateAddress() {
     setSelectedValue(value);
   };
 
+  const renderHint = () => {
+    switch (selectedValue) {
+      case "add":
+        return (
+          <>
+            <strong>Adding to Deny List:</strong>
+            <p style={{ margin: "4px 0" }}>
+              Adding the address to the deny list will{" "}
+              <strong>immediately prevent</strong> it from using this coin type
+              as input. Starting from the next epoch, the address will also be
+              unable to receive this coin type.
+            </p>
+          </>
+        );
+      case "remove":
+        return (
+          <>
+            <strong>Removing from Deny List:</strong>
+            <p style={{ margin: "4px 0" }}>
+              Removing the address from the deny list will{" "}
+              <strong>immediately allow</strong> it to use this coin type as
+              input. However, it won’t be able to receive this coin type until
+              the next epoch starts.
+            </p>
+          </>
+        );
+      case "check":
+        return (
+          <>
+            <strong>Epoch Deny List Check:</strong>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Current Epoch:</strong> Check if a specific address is on
+              the deny list for the current epoch. If it is, the address is{" "}
+              <strong>not allowed</strong> to receive this coin type during the
+              current epoch.
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Next Epoch:</strong> Check if a specific address is on the
+              deny list for the next epoch. If it’s on the list, the address
+              will <strong>immediately be unable</strong> to use this coin type
+              as input, and starting from the next epoch, it will also be unable
+              to receive this coin type.
+            </p>
+          </>
+        );
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="pb-10">
       <div className="pt-4 text-[40px] text-center">
@@ -145,6 +256,15 @@ export default function UpdateAddress() {
       </div>
       <div className="w-[700px] m-auto mt-5 p-8 bg-white">
         <ToggleSwitch options={actionOptions} onChange={handleToggleChange} />
+        <Alert
+          className="my-6"
+          message={
+            <div style={{ lineHeight: "1.6", fontSize: "16px" }}>
+              {renderHint()}
+            </div>
+          }
+          type="info"
+        />
         <Form
           form={form}
           layout="vertical"
@@ -211,6 +331,7 @@ export default function UpdateAddress() {
           setSelectTokenModalVisible(false);
         }}
       />
+      {contextHolder}
     </div>
   );
 }

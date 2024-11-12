@@ -104,6 +104,8 @@ export default function CreateToken() {
     });
 
     if (dryRunRes.effects.status.status === "failure") {
+      setLoading(false);
+      message.destroy();
       message.error(dryRunRes.effects.status.error);
       return;
     }
@@ -166,6 +168,7 @@ export default function CreateToken() {
           message.success("Tx Success! Create Coin!");
         },
         onError: (err) => {
+          setLoading(false);
           message.destroy();
           message.error(err.message);
         },

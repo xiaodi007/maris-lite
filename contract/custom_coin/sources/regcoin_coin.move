@@ -2,6 +2,7 @@ module template::regtemplate {
     use sui::coin::{Self, DenyCapV2};
     use sui::deny_list::{DenyList};
     use sui::url;
+    use sui::event::emit;
 
     /// The OTW for the Coin
     public struct REGTEMPLATE has drop {}
@@ -13,6 +14,12 @@ module template::regtemplate {
     const ICON_URL: vector<u8> = b"icon_url";
     const IS_METADATA_MUT: u8 = 55;
     const BLACK_HOLE: address = @0x0;
+    
+    // --------------- Events ---------------
+    public struct ContainAddr<phantom T> has copy, drop {
+        is_contain_current_epoch: bool,
+        is_contain_next_epoch: bool,
+    }
 
     /// Init the Coin
     fun init(witness: REGTEMPLATE, ctx: &mut TxContext) {
@@ -82,6 +89,11 @@ module template::regtemplate {
         denyaddr: address,
         ctx: &TxContext,
     ) {
-        coin::deny_list_v2_contains_current_epoch<REGTEMPLATE>(denylist, denyaddr, ctx);
+        let is_contain_current_epoch = coin::deny_list_v2_contains_current_epoch<REGTEMPLATE>(denylist, denyaddr, ctx);
+        let is_contain_next_epoch = coin::deny_list_v2_contains_next_epoch<REGTEMPLATE>(denylist, denyaddr);
+        emit(ContainAddr<REGTEMPLATE> {
+            is_contain_current_epoch,
+            is_contain_next_epoch
+        });
     }
 }

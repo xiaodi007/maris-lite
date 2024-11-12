@@ -76,7 +76,6 @@ module vesting_lock::vesting_lock {
         claim_type: string::String,
         sender: address,
         amount: u64,
-        
     }
 
     public struct ClaimLocker<phantom T> has copy, drop {
