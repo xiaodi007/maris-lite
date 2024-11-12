@@ -318,9 +318,9 @@ export default function CreateToken() {
             rules={[
               { required: true, message: "Please input the coin symbol!" },
               {
-                min: 5,
+                min: 3,
                 max: 8,
-                message: "Symbol must be between 5 and 8 characters",
+                message: "Symbol must be between 3 and 8 characters",
               },
               {
                 pattern: /^[a-zA-Z]*$/,
