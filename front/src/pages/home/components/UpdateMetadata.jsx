@@ -209,7 +209,7 @@ export default function UpdateMetadata() {
                 name="newName"
                 label="Name"
                 rules={[
-                  { required: true, message: "Please input the coin name!" },
+                  { required: false, message: "Please input the coin name!" },
                   {
                     min: 2,
                     max: 32,
@@ -230,7 +230,7 @@ export default function UpdateMetadata() {
                 rules={[
                   { required: true, message: "Please input the coin symbol!" },
                   {
-                    min: 5,
+                    min: 3,
                     max: 8,
                     message: "Symbol must be between 5 and 8 characters",
                   },

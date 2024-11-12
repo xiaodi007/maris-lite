@@ -84,9 +84,10 @@ export const generateBytecode = async (info) => {
     updated = updateDescription(updated, info.description ?? '');
     updated = updateUrl(updated, info.iconUrl ?? '');
     if (info.isMetaDataMut) {
-        updated = updateIsMetaDataMut(updated, 1);
-    } else {
         updated = updateIsMetaDataMut(updated, 0);
+    } else {
+        updated = updateIsMetaDataMut(updated, 1);
+        
     }
 
     return updated;
