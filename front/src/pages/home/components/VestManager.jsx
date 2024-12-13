@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Form, Input, Table, Tag, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
+  useCurrentAccount,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -22,6 +22,7 @@ import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import DonutChart from "../../../components/DonutChart";
 import VestingInfoModal from "../../../components/VestingInfoModal";
+import { render } from "less";
 dayjs.extend(isBetween);
 
 const gqlClient = new SuiGraphQLClient({
@@ -46,7 +47,7 @@ export default function VestManager() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const walletAddress = account?.address;
 
@@ -70,15 +71,15 @@ export default function VestManager() {
 
   const getStatus = (data) => {
     const currentTime = Date.now(); // 获取当前时间的毫秒数
-    const startTimestamp = parseInt(data.start_timestamp_ms, 10);
-    const cliffTimestamp = parseInt(data.cliff_timestamp_ms || data.start_timestamp_ms, 10);
-    const finalTimestamp = parseInt(data.final_timestamp_ms, 10);
+    const startTimestamp = parseInt(data?.start_timestamp_ms, 10);
+    const cliffTimestamp = parseInt(data?.cliff_timestamp_ms || data?.start_timestamp_ms, 10);
+    const finalTimestamp = parseInt(data?.final_timestamp_ms, 10);
 
     if (currentTime < startTimestamp) {
       return "locked"; // 当前时间在 start_timestamp_ms 之前
     } else if (currentTime >= startTimestamp && currentTime < cliffTimestamp) {
       return "cliffed"; // 当前时间在 start_timestamp_ms 和 cliff_timestamp_ms 之间
-    } else if (currentTime >= cliffTimestamp && currentTime < finalTimestamp) {
+    } else if (currentTime >= cliffTimestamp && currentTime < finalTimestamp && data?.current_balance !== '0') {
       return "releasing"; // 当前时间在 cliff_timestamp_ms 和 final_timestamp_ms 之间
     } else {
       return "finished"; // 当前时间在 final_timestamp_ms 之后
@@ -125,8 +126,10 @@ export default function VestManager() {
   );
 
   if (error) {
-    message.error('reques is error!');
+    message.error('reques is error!', error);
+    return
   }
+  
 
   const vestingSchedules = ownObjects1?.map((item) => {
     const temp = item.data?.content?.fields;
@@ -177,7 +180,6 @@ export default function VestManager() {
       }, {})
     );
 
-    console.log(groupedArray);
     return groupedArray;
   };
 
@@ -266,7 +268,6 @@ export default function VestManager() {
     const data = await gqlClient.query({
       query: chainIdentifierQuery,
     });
-    console.log("data", data);
     const result =
       data?.data?.events?.nodes?.map((item) => {
         const { amount, lock_id, token_type } = item?.contents?.json || {};
@@ -291,16 +292,19 @@ export default function VestManager() {
       title: "Title",
       dataIndex: "title",
       key: "title",
+      width: 120,
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
+      width: 100,
     },
     {
       title: "Original Balance",
       dataIndex: "original_balance",
       key: "original_balance",
+      width: 100,
       render: (text) => (
         <span>
           {text}
@@ -312,12 +316,14 @@ export default function VestManager() {
       title: "Final Timestamp",
       dataIndex: "final_timestamp_ms",
       key: "final_timestamp_ms",
+      width: 100,
       render: (text) => dayjs(Number(text)).format("DD/MM/YYYY"), // 格式化时间戳
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 100,
       render: (_text) => {
         const { color, text } = statusMap[_text]; // 根据状态获取颜色和文本
         return <Tag color={color}>{text}</Tag>; // 返回 Tag 组件
@@ -326,6 +332,7 @@ export default function VestManager() {
     {
       title: "Info",
       key: "info",
+      width: 100,
       render: (_, record) => (
         <div
           className="btn btn-primary text-sm"
@@ -377,6 +384,8 @@ export default function VestManager() {
           columns={columns}
           pagination={false}
           loading={isLoading}
+          s
+          scroll={{ x: 800 }}
         />
       </div>
 
@@ -386,11 +395,9 @@ export default function VestManager() {
         data={vestingLockList}
         onClose={() => setSelectTokenModalVisible(false)}
         onSelect={(data) => {
-          console.log(data);
           setCoinAddress(data.address);
           // 获取coinType下的所有lockId
           const result = data?.items?.map((item) => item?.lock_id)
-          console.log(result);
           setSelectLockIdList(result)
           setSelectTokenModalVisible(false);
         }}

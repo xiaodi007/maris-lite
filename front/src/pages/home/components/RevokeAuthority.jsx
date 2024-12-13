@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Input, Button, message } from "antd";
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
+  useCurrentAccount,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -28,7 +28,7 @@ export default function RevokeAuthority() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const walletAddress = account?.address;
@@ -83,6 +83,8 @@ export default function RevokeAuthority() {
     });
 
     if (dryRunRes.effects.status.status === "failure") {
+      setLoading(false);
+      message.destroy();
       message.error(dryRunRes.effects.status.error);
       return;
     }

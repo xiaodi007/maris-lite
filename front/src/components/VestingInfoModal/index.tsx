@@ -49,7 +49,7 @@ const VestingInfoModal = ({ visible, onClose, data, isClaim = false, onRefound, 
                     <span className="text-gray-500">From wallet: </span>
                     {data?.sender || '-'}</div>
                 {(data?.revocable && !isClaim) &&
-                    <div className='p-2 mb-6 inline-block border text-red-600' onClick={onRefound}>
+                    <div className='p-2 mb-6 inline-block border text-red-600 cursor-pointer' onClick={onRefound}>
                         End vesting contract
                     </div>
                 }
@@ -75,6 +75,14 @@ const VestingInfoModal = ({ visible, onClose, data, isClaim = false, onRefound, 
                                 }}
                                 className="ml-1"
                             />
+                    </Col>
+                </Row>
+                <Row className='mb-2'>
+                    <Col span={6} className="text-gray-500">
+                        Recipient
+                    </Col>
+                    <Col span={18}>
+                        {data?.recipient || '-'}
                     </Col>
                 </Row>
                 {/* <Row className='mb-2'>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Form, Input, Table, Tag, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
+  useCurrentAccount,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -46,7 +46,7 @@ export default function VestManager() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const walletAddress = account?.address;
 

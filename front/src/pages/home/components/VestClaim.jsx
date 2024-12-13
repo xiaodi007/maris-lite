@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Form, Input, Table, Tag, message, Divider } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
   useSuiClient,
+  useCurrentAccount,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
@@ -36,14 +35,17 @@ export default function VestManager() {
   const [currentClaim, setCurrentClaim] = useState({});
   const [currentVesting, setCurrentVesting] = useState({});
   const [loading, setLoading] = useState(false);
+  const [submiting, setSubmiting] = useState(false);
   const [tableLoading, setTableLoading] = useState(false);
   const [vestingInfoModalVisible, setVestingInfoModalVisible] = useState(false);
   const [form] = Form.useForm();
 
+  const searchRef = useRef();
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const currentAccount = useCurrentAccount();
+  const walletAddress = currentAccount?.address;
+
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
-  const walletAddress = account?.address;
 
   const gqlClient = new SuiGraphQLClient({
     url: "https://sui-testnet.mystenlabs.com/graphql",
@@ -55,9 +57,9 @@ export default function VestManager() {
 
   const getStatus = (data) => {
     const currentTime = Date.now(); // 获取当前时间的毫秒数
-    const startTimestamp = parseInt(data.start_timestamp_ms, 10);
-    const cliffTimestamp = parseInt(data.cliff_timestamp_ms, 10);
-    const finalTimestamp = parseInt(data.final_timestamp_ms, 10);
+    const startTimestamp = parseInt(data?.start_timestamp_ms, 10);
+    const cliffTimestamp = parseInt(data?.cliff_timestamp_ms, 10);
+    const finalTimestamp = parseInt(data?.final_timestamp_ms, 10);
 
     if (currentTime < startTimestamp) {
       return "locked"; // 当前时间在 start_timestamp_ms 之前
@@ -97,8 +99,12 @@ export default function VestManager() {
       enabled: !!currentClaim?.token_type, // Only run the query if selectMintCoin.address is defined
     }
   );
-    // console.log('coinMeta: ', coinMeta)
-  const { data: ownObjects1 } = useSuiClientQuery(
+  // console.log('coinMeta: ', coinMeta)
+  const {
+    data: ownObjects1,
+    error,
+    isLoading,
+  } = useSuiClientQuery(
     "multiGetObjects",
     {
       ids: [sureAddress],
@@ -109,35 +115,44 @@ export default function VestManager() {
     }
   );
 
-
   // 监听查询结果
   useEffect(() => {
     if (ownObjects1) {
-      const schedules =
-        ownObjects1.map((item) => {
-          const temp = item.data?.content?.fields;
-          const { current_balance, start_timestamp_ms, cliff_timestamp_ms } = temp || {};
-          const status = getStatus(temp);
-          const _currentBalance = Math.floor(
-            Number(current_balance || 0) / 10 ** (coinMeta?.decimals || 9)
-          );
-          const symbol =  temp?.token_type?.split("::")?.[2]
-          return {
-            ...temp,
-            current_balance: _currentBalance + " " + symbol,
-            status,
-            symbol,
-            lockupDuration: calculateLockDuration(
-              start_timestamp_ms,
-              cliff_timestamp_ms
-            ),
-          };
-        }) || [];
+      const item = ownObjects1[0] || {};
+
+      if (item?.error) {
+        message.destroy();
+        message.error("ID is notExists!");
+        setLoading(false);
+
+        setSureAddress("");
+        return;
+      }
+
+      const temp = item.data?.content?.fields;
+      const { current_balance, start_timestamp_ms, cliff_timestamp_ms } =
+        temp || {};
+      const status = getStatus(temp || {});
+      const _currentBalance = Math.floor(
+        Number(current_balance || 0) / 10 ** (coinMeta?.decimals || 9)
+      );
+      const symbol = temp?.token_type?.split("::")?.[2];
+      const schedules = {
+        ...temp,
+        current_balance: _currentBalance + " " + symbol,
+        status,
+        symbol,
+        lockupDuration: calculateLockDuration(
+          start_timestamp_ms,
+          cliff_timestamp_ms
+        ),
+      };
+
       message.destroy();
       setLoading(false);
 
-      setVestingSchedules(schedules);
-      setCurrentVesting(schedules[0]);
+      // setVestingSchedules(schedules);
+      setCurrentVesting(schedules);
       setVestingInfoModalVisible(true); // 打开弹窗
     }
   }, [ownObjects1]);
@@ -162,9 +177,18 @@ export default function VestManager() {
 
   const handleCancel = () => {
     setVestingInfoModalVisible(false);
+
+    setSureAddress("");
+    setCurrentVesting({});
   };
   // 取消锁定
   const handleClaim = async () => {
+    if (submiting) return;
+
+    setSubmiting(true);
+    message.destroy();
+    message.loading("Submiting, please waiting...", 10);
+
     const tx = new Transaction();
     tx.setGasBudget(100000000);
 
@@ -177,12 +201,19 @@ export default function VestManager() {
     });
 
     // Dry run
-    tx.setSender(account.address);
+    tx.setSender(walletAddress);
     const dryRunRes = await client.dryRunTransactionBlock({
       transactionBlock: await tx.build({ client }),
     });
 
     if (dryRunRes.effects.status.status === "failure") {
+      setSubmiting(false);
+      message.destroy();
+      const errorStr = dryRunRes.effects.status.error;
+      if(errorStr.includes("err_not_in_recipient")) {
+        message.error('CurrentAccount not in recipient');
+        return;
+      }
       message.error(dryRunRes.effects.status.error);
       return;
     }
@@ -201,10 +232,19 @@ export default function VestManager() {
             },
           });
 
-          message.success("Tx Success!");
+          setSubmiting(false);
+          message.destroy();
+          message.success("Claim Success!");
           setVestingInfoModalVisible(false);
+
+          // 刷新
+          setTimeout(() => {
+            fetchVestingHistory();
+          }, 1000);
         },
         onError: (err) => {
+          setSubmiting(false);
+          message.destroy();
           message.error(err.message);
         },
       }
@@ -246,15 +286,20 @@ export default function VestManager() {
         }
       }
   `);
-    const data = await gqlClient.query({
-      query: chainIdentifierQuery,
-    });
+    const data = await gqlClient
+      .query({
+        query: chainIdentifierQuery,
+      })
+      .catch((err) => {
+        setTableLoading(false);
+        message.error("Request timed out");
+      });
 
     setTableLoading(false);
     const result =
       data?.data?.events?.nodes?.map((item) => {
         const { amount, lock_id, token_type } = item?.contents?.json || {};
-        let _tokenType = '0x' + token_type;
+        let _tokenType = "0x" + token_type;
         const symbol = _tokenType?.split("::")?.[2];
         return {
           amount,
@@ -266,6 +311,9 @@ export default function VestManager() {
         };
       }) || [];
     setDataSource(result);
+
+    // 清空地址
+    setSureAddress("");
   };
 
   const columns = [
@@ -287,9 +335,15 @@ export default function VestManager() {
           <div
             className=" text-[#2cb4cd] text-[14px] mr-4  cursor-pointer"
             onClick={() => {
-              setSearchValue(record?.lock_id);
-              console.log(record)
-              setCurrentClaim(record)
+              setSureAddress(record?.lock_id);
+              setCurrentClaim(record);
+
+              message.destroy();
+              message.loading("Loading...", 0);
+
+              // setTimeout(() => {
+              //   onSearch();
+              // }, 500);
             }}
           >
             Lock Info
@@ -312,6 +366,7 @@ export default function VestManager() {
   return (
     <div className="px-6 pt-[100px] flex flex-col justify-center">
       <Input.Search
+        ref={searchRef}
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
         placeholder="input Vesting & Lock ID"

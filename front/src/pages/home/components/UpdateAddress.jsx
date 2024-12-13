@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Input, Alert, Button, message, notification } from "antd";
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
+  useCurrentAccount,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -30,7 +30,7 @@ export default function UpdateAddress() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const walletAddress = account?.address;
@@ -134,7 +134,6 @@ export default function UpdateAddress() {
               showEvents: true,
             },
           });
-          console.log(finalRes);
           const parsedJson = finalRes.events[0]?.parsedJson;
           message.success("Tx Success!");
 

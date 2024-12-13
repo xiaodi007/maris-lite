@@ -15,6 +15,7 @@ import VestCreate from "./components/VestCreate";
 import VestManager from "./components/VestManager";
 import VestClaim from "./components/VestClaim";
 import WormholeModal from "../../components/WormholeModal";
+import Wallet from "../../components/Wallet";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -114,10 +115,11 @@ const App = () => {
               WormholeConnect
             </div>
           </Popover> */}
-          <ConnectButton
+          {/* <ConnectButton
             connectText="CONNECT WALLET"
             style={{ background: "#2cb4cd", color: "white", boxShadow: "none" }}
-          />
+          /> */}
+          <Wallet />
         </div>
         <Header
           style={{ background: colorBgContainer, padding: "40px 0" }}

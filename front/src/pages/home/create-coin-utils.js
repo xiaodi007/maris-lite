@@ -46,7 +46,7 @@ const updateSymbol = (modifiedByteCode, symbol) =>
     updateConstant(modifiedByteCode, 'SYMBOL', symbol.toUpperCase().trim());
 
 const updateName = (modifiedByteCode, name) =>
-    updateConstant(modifiedByteCode, 'NAME', name.trim());
+    updateConstant(modifiedByteCode, 'NAME', name?.toLowerCase().trim());
 
 const updateDescription = (modifiedByteCode, description) =>
     updateConstant(modifiedByteCode, 'DESCRIPTION', description.trim());

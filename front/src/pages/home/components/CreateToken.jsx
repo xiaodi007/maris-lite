@@ -12,7 +12,6 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 import {
   useCurrentAccount,
-  useAccounts,
   useSuiClient,
   useSignAndExecuteTransaction,
 } from "@mysten/dapp-kit";
@@ -34,9 +33,8 @@ export default function CreateToken() {
   const [isDropTreasury, setIsDropTreasury] = useState(true);
   const [isMetaDataMut, setIsMetaDataMut] = useState(false);
   const [form] = Form.useForm();
-  //   const account = useCurrentAccount();
+  const account = useCurrentAccount();
   const client = useSuiClient();
-  const [account] = useAccounts();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   // useEffect(() => {
@@ -59,7 +57,7 @@ export default function CreateToken() {
     if (file) {
       message.info("Uploading file...", 0);
       const blobId = await handleUpload(file);
-      console.log("Uploaded file blob ID:", blobId);
+      // console.log("Uploaded file blob ID:", blobId);
       if (blobId) {
         newIconUrl = `https://aggregator.walrus-testnet.walrus.space/v1/${blobId}`;
       }
@@ -194,7 +192,7 @@ export default function CreateToken() {
 
       if (response.status === 200) {
         const info = await response.json();
-        console.log("Upload successful:", info);
+        // console.log("Upload successful:", info);
         const blobId =
           info.newlyCreated?.blobObject?.blobId ||
           info?.alreadyCertified?.blobId;
@@ -212,7 +210,6 @@ export default function CreateToken() {
 
   const handleToggleChange = (value) => {
     setSelectedValue(value);
-    console.log("Selected value:", value); // 打印选中的值
   };
 
   function getMaxSupply(precision) {
@@ -377,10 +374,10 @@ export default function CreateToken() {
                 message: "Please input the number of decimals!",
               },
             ]}
-            extra="Enter token decimal precision (default: 9 if unsure)"
+            extra="Enter token decimal precision (default: 9 if unsure, minimum: 2)"
           >
             <InputNumber
-              min={0}
+              min={2}
               placeholder="Eg. 9"
               style={{ width: "100%" }}
               onChange={handleDecimalsChange}
@@ -406,12 +403,13 @@ export default function CreateToken() {
           <div className="flex justify-between items-center mb-5">
             <div>
               <div>Revoke Update (Immutable)</div>
-             
             </div>
             <Switch value={isMetaDataMut} onChange={setIsMetaDataMut} />
           </div>
-          <div className="text-gray-500">Metadata locked when selected. Leave unselected to edit later in Revoke</div>
-          
+          <div className="text-gray-500">
+            Metadata locked when selected. Leave unselected to edit later in
+            Revoke
+          </div>
 
           {!account && (
             <div className="text-center mb-6">

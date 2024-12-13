@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
+  useCurrentAccount,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -49,7 +49,7 @@ export default function VestCreate() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const walletAddress = account?.address;
@@ -81,7 +81,7 @@ export default function VestCreate() {
       enabled: !!selectMintCoin?.address, // Only run the query if selectMintCoin.address is defined
     }
   );
-  console.log("coinMeta1: ", coinMeta1);
+  // console.log("coinMeta1: ", coinMeta1);
   const { data: coinInfo } = useSuiClientQuery(
     "getCoins",
     {
@@ -227,6 +227,8 @@ export default function VestCreate() {
     });
 
     if (dryRunRes.effects.status.status === "failure") {
+      setLoading(false);
+      message.destroy();
       message.error(dryRunRes.effects.status.error);
       return;
     }

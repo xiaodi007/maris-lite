@@ -60,22 +60,26 @@ const VestingTimeLine = (props) => {
 
   const option = {
     grid: {
-      left: "8%",
+      // 启用此属性后，grid 会自动根据刻度标签和标题的大小进行调整
+      containLabel: true,
+      // left: "0%",
       top: "8%",
-      right: "10px",
+      right: "34px",
       bottom: "10%",
     },
     tooltip: {
       trigger: "axis",
     },
     xAxis: {
-      type: "category",
+      type: 'category',
+      boundaryGap: false,
       data: category || [],
       axisTick: { show: false },
       axisLine: { show: true, lineStyle: { color: "#eee" } },
       axisLabel: {
         show: true,
         interval: "auto",
+        showMaxLabel: true,
         color: "#999",
         fontSize: "12",
       },
@@ -133,7 +137,7 @@ const VestingTimeLine = (props) => {
         <ReactEcharts
           ref={chartRef}
           option={option}
-          style={{ width: "100%", height: "33vh" }}
+          style={{ width: "100%", height: "33vh", marginLeft: -40 }}
           className="mb-8"
         />
       )}

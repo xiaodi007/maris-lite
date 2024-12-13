@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Form, Input, Upload, Button, Row, Col, message } from "antd";
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
-  useAccounts,
+  useCurrentAccount,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -29,7 +29,7 @@ export default function UpdateMetadata() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const walletAddress = account?.address;
@@ -75,7 +75,6 @@ export default function UpdateMetadata() {
 
       if (response.status === 200) {
         const info = await response.json();
-        console.log("Upload successful:", info);
         const blobId =
           info.newlyCreated?.blobObject?.blobId ||
           info?.alreadyCertified?.blobId;
@@ -85,13 +84,12 @@ export default function UpdateMetadata() {
         throw new Error("Something went wrong when storing the blob!");
       }
     } catch (error) {
-      console.error("Error uploading the file:", error);
+      // console.error("Error uploading the file:", error);
       message.error("Failed to upload the file.");
       return undefined;
     }
   };
   const onFinish = async (values) => {
-    console.log(values.iconFiles);
     const file = values.iconFiles?.[0]?.originFileObj;
 
     let newIconUrl = values.iconUrl;; // 默认使用原来的 iconUrl
@@ -99,7 +97,6 @@ export default function UpdateMetadata() {
     if (file) {
       message.info("Uploading file...", 0);
       const blobId = await handleUpload(file);
-      console.log("Uploaded file blob ID:", blobId);
       if (blobId) {
         newIconUrl = `https://aggregator.walrus-testnet.walrus.space/v1/${blobId}`;
       }
@@ -191,6 +188,8 @@ export default function UpdateMetadata() {
     });
 
     if (dryRunRes.effects.status.status === "failure") {
+      setLoading(false);
+      message.destroy();
       message.error(dryRunRes.effects.status.error);
       return;
     }

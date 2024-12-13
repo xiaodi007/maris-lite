@@ -11,7 +11,6 @@ import {
 import { SearchOutlined, UploadOutlined } from "@ant-design/icons";
 import {
   useCurrentAccount,
-  useAccounts,
   useSuiClient,
   useSuiClientQuery,
   useSignAndExecuteTransaction,
@@ -32,7 +31,7 @@ export default function TokenMint() {
   const [form] = Form.useForm();
 
   const client = useSuiClient();
-  const [account] = useAccounts();
+  const account = useCurrentAccount();
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
 
   const walletAddress = account?.address;
@@ -97,6 +96,8 @@ export default function TokenMint() {
     });
 
     if (dryRunRes.effects.status.status === "failure") {
+      setLoading(false);
+      message.destroy();
       message.error(dryRunRes.effects.status.error);
       return;
     }
